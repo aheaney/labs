@@ -2,7 +2,7 @@
 
 # Adam Heaney
 # CSE P 590 B - Robotics
-# Lab 5 - Servoing and Finite State Machines
+# Lab 4 - Ball detection
 
 import cv2
 import sys
