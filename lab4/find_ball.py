@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
 
+# Adam Heaney
+# CSE P 590 B - Robotics
+# Lab 5 - Servoing and Finite State Machines
+
 import cv2
 import sys
 import copy
@@ -24,9 +28,14 @@ def find_ball(opencv_image, debug=False):
 	"""
 
 	ball = None
-	
-	## TODO: INSERT YOUR SOLUTION HERE
-	
+
+	opencv_image = cv2.GaussianBlur(opencv_image, (5,5), 0)
+
+	circles = cv2.HoughCircles(opencv_image, cv2.HOUGH_GRADIENT, 1, 30, param1=75, param2=35, minRadius=0, maxRadius=0)
+
+	if not circles is None and circles.any():
+		ball = circles[0][0]
+
 	return ball
 
 
