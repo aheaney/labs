@@ -125,8 +125,10 @@ class SearchForBallState(State):
 class ApproachBallState(State):
     async def enter(self):
         print("Enter ApproachBallState")
+
     async def exit(self):
         print("Exit ApproachBallState")
+
     async def tick(self, camera_image, ball):
         if ball is None:
             # If the ball is lost, return to the search state.
@@ -163,8 +165,10 @@ class ApproachBallState(State):
 class HitBallState(State):
     async def enter(self):
         print("Enter HitBallState")
+
     async def exit(self):
         print("Exit HitBallState")
+
     async def tick(self, camera_image, ball):
         # Hit the ball.
         await self.robot.play_anim_trigger(cozmo.anim.Triggers.PouncePounce).wait_for_completed()
