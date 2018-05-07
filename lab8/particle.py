@@ -25,6 +25,7 @@ class Particle(object):
         self.x = x
         self.y = y
         self.h = heading
+        self.weight = 0
 
     def __repr__(self):
         return "(x = %f, y = %f, heading = %f deg)" % (self.x, self.y, self.h)

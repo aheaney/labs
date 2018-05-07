@@ -76,6 +76,10 @@ class ParticleFilter:
         self.robbie = robbie
         self.grid = grid
 
+    def updatetest(self):
+        m_x, m_y, m_h, m_confident = compute_mean_pose(self.particles)
+        return (m_x, m_y, m_h, m_confident)
+
     def update(self):
 
         # ---------- Move Robot and get odometry ----------
@@ -85,6 +89,7 @@ class ParticleFilter:
         else:
             odom = add_odometry_noise(move_robot_forward(self.robbie, Robot_speed, self.grid), \
                 heading_sigma=ODOM_HEAD_SIGMA, trans_sigma=ODOM_TRANS_SIGMA)
+        #odom = 0, 0, 0
 
         print('\nrobot :', self.robbie)
         print('odometry measured :', odom)
@@ -100,10 +105,11 @@ class ParticleFilter:
         #print("r_marker_list :", r_marker_list)
 
         # add noise to marker list
-        r_marker_list = []
-        for m in r_marker_list_raw:
-            r_marker_list.append(add_marker_measurement_noise(m, \
-                trans_sigma=MARKER_TRANS_SIGMA, rot_sigma=MARKER_ROT_SIGMA))
+        #r_marker_list = []
+        #for m in r_marker_list_raw:
+        #    r_marker_list.append(add_marker_measurement_noise(m, \
+        #        trans_sigma=MARKER_TRANS_SIGMA, rot_sigma=MARKER_ROT_SIGMA))
+        r_marker_list = r_marker_list_raw
 
 
         # ---------- PF: Sensor (markers) model update ----------
@@ -138,6 +144,7 @@ if __name__ == "__main__":
     
     # initial distribution assigns each particle an equal probability
     particles = Particle.create_random(PARTICLE_COUNT, grid)
+    #particles = [Particle(Robot_init_pose[0], Robot_init_pose[1], Robot_init_pose[2]) for _ in range(0, PARTICLE_COUNT)]
     robbie = Robot(Robot_init_pose[0], Robot_init_pose[1], Robot_init_pose[2])
     particlefilter = ParticleFilter(particles, robbie, grid)
 

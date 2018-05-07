@@ -82,7 +82,14 @@ class GUIWindow():
             p = particles[int(idx)]
             coord = (p.x,p.y)
             # print((p.x,p.y))
-            self.colorCircle(coord, '#FF0000', 2)
+            if p.weight:
+                wvalue = min(255, max(0, int(round(p.weight * 255))))
+                if p.weight > 0.8:
+                    self.colorCircle(coord, '#00{:02X}00'.format(wvalue), 2)
+                else:
+                    self.colorCircle(coord, '#0000{:02X}'.format(wvalue), 2)
+            else:
+                self.colorCircle(coord, '#FF0000', 2)
             ldx, ldy = rotate_point(line_length, 0, p.h)
             self.colorLine(coord, (coord[0]+ldx, coord[1]+ldy))
             idx += draw_skip
@@ -122,7 +129,7 @@ class GUIWindow():
         x0, y0 = location[0]*self.grid.scale - dot_size, (self.height-location[1])*self.grid.scale - dot_size
         x1, y1 = location[0]*self.grid.scale + dot_size, (self.height-location[1])*self.grid.scale + dot_size
         # print(x0,y0,x1,y1)
-        return self.canvas.create_oval(x0, y0, x1, y1, fill=color)
+        return self.canvas.create_oval(x0, y0, x1, y1, fill=color, outline=color)
 
     def colorLine(self, coord1, coord2, color='black', linewidth=1, dashed=False):
         if dashed:
