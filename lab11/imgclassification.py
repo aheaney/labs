@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 ##############
-#### Your name:
+#### Your name: Adam Heaney
 ##############
 
 import numpy as np
