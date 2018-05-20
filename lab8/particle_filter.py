@@ -37,6 +37,9 @@ def angleDifference(a1, a2):
     else:
         return difference
 
+def motion_update2(particles, odom):
+    return particles
+
 def motion_update(particles, odom):
     """ Particle filter motion update
 
@@ -62,6 +65,9 @@ def motion_update(particles, odom):
         particle.h += odom[2]
         add_particle_noise(particle, movementLength * 0.2, odom[2] * 0.2)
 
+    return particles
+
+def measurement_update3(particles, measured_marker_list, grid):
     return particles
 
 def measurement_update(particles, measured_marker_list, grid):
@@ -96,9 +102,9 @@ def measurement_update(particles, measured_marker_list, grid):
     if len(measured_marker_list) == 0:
         return particles
 
-    TRANS_SCALE = 2.0
-    HEADING_SCALE = 5.0
-    WEIGHTED_RESAMPLE_PERCENTAGE = 0.5
+    TRANS_SCALE = 12.0
+    HEADING_SCALE = 12.0
+    # WEIGHTED_RESAMPLE_PERCENTAGE = 0.5
     UNIFORM_RESAMPLE_PERCENTAGE = 0.05
 
     particleWeights = []
@@ -106,8 +112,20 @@ def measurement_update(particles, measured_marker_list, grid):
     sumOfWeights = 0
     for particle in particles:
         importance = 0
-        if grid.is_in(particle.x, particle.y):
+
+        if not grid.is_in(particle.x, particle.y):
+            particle.x = min(grid.width, max(0, particle.x))
+            particle.y = min(grid.height, max(0, particle.y))
+            print("Clamped particle ", str(particle.x), str(particle.y))
+
+        if True:
+        #if grid.is_in(particle.x, particle.y):
             #markersRelativeToParticle = particle.read_markers(grid)
+
+            # p particle sensed the same markers?
+            # p marker was sensed?
+            # Wparticle = sum<global markers>(P(getting the given sensor input))
+
             markersRelativeToParticle = []
             for marker in grid.markers:
                 m_x, m_y, m_h = parse_marker_info(marker[0], marker[1], marker[2])
@@ -115,8 +133,10 @@ def measurement_update(particles, measured_marker_list, grid):
                 mr_x, mr_y = rotate_point(m_x - particle.x, m_y - particle.y, -particle.h)
                 mr_h = diff_heading_deg(m_h, particle.h)
                 markersRelativeToParticle.append((mr_x, mr_y, mr_h))
-            for sensedMarker in measured_marker_list:
-                for particleMarker in markersRelativeToParticle:
+            for particleMarker in markersRelativeToParticle:
+                pMarkers = []
+
+                for sensedMarker in measured_marker_list:
                     dx = (sensedMarker[0] - particleMarker[0])# / TRANS_SCALE
                     dy = (sensedMarker[1] - particleMarker[1])# / TRANS_SCALE
                     #dh = angleDifference(sensedMarker[2], particleMarker[2])# / HEADING_SCALE
@@ -125,11 +145,15 @@ def measurement_update(particles, measured_marker_list, grid):
                     ny = norm.pdf(dy, scale=TRANS_SCALE) / norm.pdf(0, scale=TRANS_SCALE)
                     nh = norm.pdf(dh, scale=HEADING_SCALE) / norm.pdf(0, scale=HEADING_SCALE)
                     w = nx * ny * nh
-                    importance += w
+                    pMarkers.append(w)
+                importance += max(pMarkers)
+                #print("imp ", str(importance))
         particleWeights.append(importance)
         sumOfWeights += importance
+        #print("sow ", str(sumOfWeights))
 
     if sumOfWeights is 0:
+        print("SoW is 0, recreateing all particles")
         particles = Particle.create_random(PARTICLE_COUNT, grid)
     else:
         pWCounter = 0
@@ -143,7 +167,6 @@ def measurement_update(particles, measured_marker_list, grid):
         while pWCounter < len(particleWeights):
             particles[pWCounter].weight = particleWeights[pWCounter] / maxW # test code
             pWCounter = pWCounter + 1
-
 
         particles = np.random.choice(particles, len(particles), True, particleWeights)
 
