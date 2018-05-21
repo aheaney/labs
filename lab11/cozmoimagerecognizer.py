@@ -69,12 +69,10 @@ async def run(robot: cozmo.robot.Robot):
 
     # load images
     (train_raw, train_labels) = img_clf.load_data_from_folder('./train/')
-    (test_raw, test_labels) = img_clf.load_data_from_folder('./test/')
-    
+
     # convert images into features
     train_data = img_clf.extract_image_features(train_raw)
-    test_data = img_clf.extract_image_features(test_raw)
-    
+
     # train model and test on training data
     img_clf.train_classifier(train_data, train_labels)
 
