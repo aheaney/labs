@@ -40,7 +40,15 @@ class ImageClassifier:
         ########################
         ######## YOUR CODE HERE
         ########################
-        
+
+        feature_data = []
+        for image in data:
+            imgProcessed = color.rgb2grey(image)
+            imgProcessed = filters.gaussian(imgProcessed)
+            hogDescriptor = feature.hog(imgProcessed, orientations=8, pixels_per_cell=(12, 12),
+                cells_per_block=(1, 1), block_norm='L1-sqrt')
+            feature_data.append(hogDescriptor)
+
         # Please do not modify the return type below
         return(feature_data)
 
@@ -53,6 +61,9 @@ class ImageClassifier:
         ######## YOUR CODE HERE
         ########################
 
+        self.classifer = svm.SVC(kernel='linear')
+        self.classifer.fit(train_data, train_labels)
+
     def predict_labels(self, data):
         # Please do not modify the header
 
@@ -63,6 +74,8 @@ class ImageClassifier:
         ######## YOUR CODE HERE
         ########################
         
+        predicted_labels = self.classifer.predict(data)
+
         # Please do not modify the return type below
         return predicted_labels
 
