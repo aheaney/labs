@@ -6,7 +6,7 @@
     "configurations": [
 
     {
-        "name": "Python: Current File",
+        "name": "Python: Pf Gui",
         "type": "python",
         "request": "launch",
         "program": "${workspaceFolder}\\lab8\\pf_gui.py",
