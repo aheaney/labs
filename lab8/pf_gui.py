@@ -105,11 +105,11 @@ class ParticleFilter:
         #print("r_marker_list :", r_marker_list)
 
         # add noise to marker list
-        #r_marker_list = []
-        #for m in r_marker_list_raw:
-        #    r_marker_list.append(add_marker_measurement_noise(m, \
-        #        trans_sigma=MARKER_TRANS_SIGMA, rot_sigma=MARKER_ROT_SIGMA))
-        r_marker_list = r_marker_list_raw
+        r_marker_list = []
+        for m in r_marker_list_raw:
+            r_marker_list.append(add_marker_measurement_noise(m, \
+                trans_sigma=MARKER_TRANS_SIGMA, rot_sigma=MARKER_ROT_SIGMA))
+        #r_marker_list = r_marker_list_raw
 
 
         # ---------- PF: Sensor (markers) model update ----------

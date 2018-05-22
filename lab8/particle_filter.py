@@ -102,8 +102,8 @@ def measurement_update(particles, measured_marker_list, grid):
     if len(measured_marker_list) == 0:
         return particles
 
-    TRANS_SCALE = 12.0
-    HEADING_SCALE = 12.0
+    TRANS_SCALE = 4.0
+    HEADING_SCALE = 28.0
     # WEIGHTED_RESAMPLE_PERCENTAGE = 0.5
     UNIFORM_RESAMPLE_PERCENTAGE = 0.05
 
@@ -113,10 +113,10 @@ def measurement_update(particles, measured_marker_list, grid):
     for particle in particles:
         importance = 0
 
-        if not grid.is_in(particle.x, particle.y):
-            particle.x = min(grid.width, max(0, particle.x))
-            particle.y = min(grid.height, max(0, particle.y))
-            print("Clamped particle ", str(particle.x), str(particle.y))
+        #if not grid.is_in(particle.x, particle.y):
+        #    particle.x = min(grid.width, max(0, particle.x))
+        #    particle.y = min(grid.height, max(0, particle.y))
+        #    print("Clamped particle ", str(particle.x), str(particle.y))
 
         if True:
         #if grid.is_in(particle.x, particle.y):
@@ -170,11 +170,11 @@ def measurement_update(particles, measured_marker_list, grid):
 
         particles = np.random.choice(particles, len(particles), True, particleWeights)
 
-    numParticlesToRandomlyResample = len(particles) * UNIFORM_RESAMPLE_PERCENTAGE
-    cntr = 0
-    while cntr < numParticlesToRandomlyResample:
-        particles[random.randint(0, len(particles) - 1)] = Particle(*grid.random_free_place())
-        cntr = cntr + 1
+    #numParticlesToRandomlyResample = len(particles) * UNIFORM_RESAMPLE_PERCENTAGE
+    #cntr = 0
+    #while cntr < numParticlesToRandomlyResample:
+    #    particles[random.randint(0, len(particles) - 1)] = Particle(*grid.random_free_place())
+    #    cntr = cntr + 1
 
     return particles
 
