@@ -181,13 +181,6 @@ def measurement_update(particles, measured_marker_list, grid):
         particleWeights[pWCounter] /= sumOfWeights
         pWCounter = pWCounter + 1
 
-    #test code ####### REMOVE
-    maxW = max(particleWeights)
-    pWCounter = 0
-    while pWCounter < len(particleWeights):
-        particles[pWCounter].weight = particleWeights[pWCounter] / maxW # test code
-        pWCounter = pWCounter + 1
-
     particles = np.random.choice(particles, len(particles), True, particleWeights)
 
     if errorSamples == 0:
