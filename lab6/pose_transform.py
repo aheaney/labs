@@ -81,23 +81,23 @@ class Quaternion(Vector4):
 		qPointRotated = self.multiply(qPoint.multiply(self.inverse()))
 		return Vector3(qPointRotated.x, qPointRotated.y, qPointRotated.z)
 
-v1 = Vector3(6, 7, 8)
-v2 = Vector3(1, 2, 8)
+# v1 = Vector3(6, 7, 8)
+# v2 = Vector3(1, 2, 8)
+# 
+# v3 = v1.cross(v2)
+# print("Result ", v3.x, ", ", v3.y, ", ", v3.z)
+# 
+# q1 = Quaternion(2, 3, 4, 1)
+# q2 = Quaternion(6, 7, 0, 5)
+# 
+# q3 = q1.multiply(q2)
+# print("Result ", q3.x, ", ", q3.y, ", ", q3.z, ", ", q3.w)
+# 
+# q1.normalize()
+# vr = q1.rotatePoint(v1)
+# print("Result ", vr.x, ", ", vr.y, ", ", vr.z, " mv1 ", v1.magnitude(), " mvr ", vr.magnitude())
 
-v3 = v1.cross(v2)
-print("Result ", v3.x, ", ", v3.y, ", ", v3.z)
-
-q1 = Quaternion(2, 3, 4, 1)
-q2 = Quaternion(6, 7, 0, 5)
-
-q3 = q1.multiply(q2)
-print("Result ", q3.x, ", ", q3.y, ", ", q3.z, ", ", q3.w)
-
-q1.normalize()
-vr = q1.rotatePoint(v1)
-print("Result ", vr.x, ", ", vr.y, ", ", vr.z, " mv1 ", v1.magnitude(), " mvr ", vr.magnitude())
-
-def get_relative_pose(object_pose: cozmo.util.Pose, reference_frame_pose: cozmo.util.Pose):
+def get_relative_pose_3d(object_pose: cozmo.util.Pose, reference_frame_pose: cozmo.util.Pose):
 	# ####
 	# TODO: Implement computation of the relative frame using numpy.
 	# Try to derive the equations yourself and verify by looking at
@@ -121,6 +121,11 @@ def get_relative_pose(object_pose: cozmo.util.Pose, reference_frame_pose: cozmo.
 		positionDeltaReferenceSpace.x, positionDeltaReferenceSpace.y, positionDeltaReferenceSpace.z,
 		rotationDelta.w, rotationDelta.x, rotationDelta.y, rotationDelta.z)
 
+def get_relative_pose(object_pose: cozmo.util.Pose, reference_frame_pose: cozmo.util.Pose):
+	
+
+	pass
+
 def find_relative_cube_pose(robot: cozmo.robot.Robot):
 	'''Looks for a cube while sitting still, prints the pose of the detected cube
 	in world coordinate frame and relative to the robot coordinate frame.'''
@@ -136,7 +141,7 @@ def find_relative_cube_pose(robot: cozmo.robot.Robot):
 				print("Robot pose: %s" % robot.pose)
 				print("Cube pose: %s" % cube.pose)
 				#print("Cube pose in the robot coordinate frame: %s" % get_relative_pose(cube.pose, robot.pose))
-				print("Cube p: %s" % get_relative_pose(cube.pose, robot.pose))
+				print("Cube p 3d : %s" % get_relative_pose_3d(cube.pose, robot.pose))
 				print("Actual: %s" % robot.pose.define_pose_relative_this(cube.pose))
 		except asyncio.TimeoutError:
 			print("Didn't find a cube")

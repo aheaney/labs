@@ -13,6 +13,39 @@ import time
 def sqrt(x):
 	return x**(0.5)
 
+def sqr(x):
+	return x * x
+
+def sign(x):
+	if x < 0.0:
+		return -1.0
+	else:
+		return 1.0
+
+def clampAngle(angle):
+    angleMod = abs(angle) % 360.0
+    if angle > 0.0:
+        if angleMod <= 180.0:
+            return angleMod
+        else:
+            return angleMod - 360.0
+    else:
+        if angleMod < 180.0:
+            return -angleMod
+        else:
+            return (-angleMod) + 360.0
+
+class Vector2:
+	def __init__(self, x, y):
+		self.x = x
+		self.y = y
+	def distanceTo(self, v):
+		return self.subtract(v).magnitude()
+	def subtract(self, v):
+		return Vector2(self.x - v.x, self.y - v.y)
+	def magnitude(self):
+		return sqrt(sqr(self.x) + sqr(self.y))
+
 # Wrappers for existing Cozmo navigation functions
 
 def cozmo_drive_straight(robot, dist, speed):
@@ -121,7 +154,7 @@ def my_drive_straight(robot, dist, speed):
 	"""Drives the robot straight.
 		Arguments:
 		robot -- the Cozmo robot instance passed to the function
-		dist -- Desired distance of the movement in millimeters
+		dist -- Desired distance of the movement in millimetei8
 		speed -- Desired speed of the movement in millimeters per second
 	"""
 	# ####
@@ -129,11 +162,12 @@ def my_drive_straight(robot, dist, speed):
 	# robot.drive_wheels() function.
 	# ####
 
-	if speed is 0.0:
+	if speed == 0.0:
 		return
 
-	# Per the default behavior of drive_wheels(), acceleration = speed
-	acceleration = speed
+	direction = sign(speed)
+	speed = abs(speed)
+	acceleration = speed # Per the default behavior of drive_wheels(), acceleration = speed
 
 	distanceToTargetSpeed = sqr(speed) / (2.0 * acceleration)
 
@@ -145,10 +179,8 @@ def my_drive_straight(robot, dist, speed):
 		remainingDistance = dist - distanceToTargetSpeed
 		time += remainingDistance / speed
 
-
-	cozmo.robot.
-
-	pass
+	wheelSpeed = direction * speed
+	robot.drive_wheels(wheelSpeed, wheelSpeed, acceleration, acceleration, time)
 
 def my_turn_in_place(robot, angle, speed):
 	"""Rotates the robot in place.
@@ -161,7 +193,12 @@ def my_turn_in_place(robot, angle, speed):
 	# TODO: Implement your version of a rotating in place function using the
 	# robot.drive_wheels() function.
 	# ####
-	pass
+
+	if speed == 0.0
+		return
+
+ANGULAR_VELOCITY_DEGpS = 180.0
+DISPLACEMENT_VELOCITY_MMpS = 50.0
 
 def my_go_to_pose1(robot, x, y, angle_z):
 	"""Moves the robot to a pose relative to its current pose.
@@ -176,7 +213,21 @@ def my_go_to_pose1(robot, x, y, angle_z):
 	# include a sequence of turning in place, moving straight, and then turning
 	# again at the target to get to the desired rotation (Approach 1).
 	# ####
-	pass
+
+	vRobot = Vector2(robot.pose.position.x, robot.pose.position.y)
+	vTarget = Vector2(x, y)
+	vDelta = vTarget.subtract(vRobot)
+
+	targetHeading = math.atan2(vDelta.y, vDelta.x)
+	angle = clampAngle(targetHeading - robot.pose.rotation.angle_z)
+	my_turn_in_place(robot, angle, ANGULAR_VELOCITY_DEGpS)
+
+	distance = vDelta.magnitude()
+	my_drive_straight(robot, distance, DISPLACEMENT_VELOCITY_MMpS)
+
+	angle = clampAngle(angle_z - targetHeading)
+	my_turn_in_place(robot, angle, ANGULAR_VELOCITY_DEGpS)
+
 
 def my_go_to_pose2(robot, x, y, angle_z):
 	"""Moves the robot to a pose relative to its current pose.
