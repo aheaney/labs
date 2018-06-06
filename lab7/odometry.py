@@ -165,7 +165,7 @@ def my_drive_straight(robot, dist, speed):
 	"""Drives the robot straight.
 		Arguments:
 		robot -- the Cozmo robot instance passed to the function
-		dist -- Desired distance of the movement in millimetei8
+		dist -- Desired distance of the movement in millimeters
 		speed -- Desired speed of the movement in millimeters per second
 	"""
 	# ####
@@ -207,8 +207,6 @@ def my_turn_in_place(robot, angle, speed):
 	# TODO: Implement your version of a rotating in place function using the
 	# robot.drive_wheels() function.
 	# ####
-
-	print("turn ", str(angle))
 
 	if speed == 0.0:
 		return
@@ -292,8 +290,6 @@ def my_go_to_pose2(robot, x, y, angle_z):
 	# robot to reduce distance between current and desired pose (Approach 2).
 	# ####
 
-	print("gtp ", str(x), " ", str(y), " a ", str(angle_z))
-
 	distanceBetweenWheels = get_distance_between_wheels()
 
 	initialPosition = Vector2(robot.pose.position.x, robot.pose.position.y)
@@ -310,14 +306,9 @@ def my_go_to_pose2(robot, x, y, angle_z):
 	currentRotation = 0.0
 
 	while currentPosition.distanceTo(goalPosition) > DISTANCE_ALLOWANCE:
-
-		#print("C pos ", str(currentPosition.x), " ", str(currentPosition.y), " rot ", str(currentRotation), " G pos ", str(goalPosition.x), " ", str(goalPosition.y), " rot ", str(goalRotation))
-
 		distance = currentPosition.distanceTo(goalPosition)
 		headingdelta = clampAngle(currentRotation - math.degrees(math.atan2(currentPosition.y - goalPosition.y, currentPosition.x - goalPosition.x)))
 		angledelta = clampAngle(goalRotation - currentRotation)
-
-		#print("dist ", str(distance), " head ", str(headingdelta), " psoeangle ", str(angledelta))
 
 		displacementOffset = GAIN_P1 * distance
 		angleOffset = (GAIN_P2 * math.radians(clampAngle(headingdelta))) + (GAIN_P3 * math.radians(clampAngle(angledelta)))
@@ -325,14 +316,10 @@ def my_go_to_pose2(robot, x, y, angle_z):
 		velocityLeft = 0.5 * ((2.0 * displacementOffset) - (angleOffset * distanceBetweenWheels))
 		velocityRight = 0.5 * ((2.0 * displacementOffset) + (angleOffset * distanceBetweenWheels))
 
-		#print("dO ", str(displacementOffset), " aO ", str(angleOffset), " vL ", str(velocityLeft), " vR ", str(velocityRight))
-
 		robot.drive_wheels(velocityLeft, velocityRight, None, None, TIME_STEP)
 
 		robotPositionWorld = Vector2(robot.pose.position.x, robot.pose.position.y)
 		robotRotationWorld = robot.pose.rotation.angle_z.degrees
-
-		#print("RB pos ", str(robotPositionWorld.x), " ", str(robotPositionWorld.y), " rot ", str(robotRotationWorld))
 
 		currentPosition = robotPositionWorld.subtract(initialPosition).rotated(-math.radians(initialRotation))
 		currentRotation = clampAngle(robotRotationWorld - initialRotation)
@@ -376,19 +363,6 @@ def my_go_to_pose3(robot, x, y, angle_z):
 	else:
 		my_go_to_pose2(robot, x, y, angle_z)
 
-def test(robot: cozmo.robot.Robot):
-	#cozmo_drive_straight(robot, 341, 50)
-	#await robot.drive_wheels(45, 30)
-	#time.sleep(600)
-	#rotate_front_wheel(robot, 360.0)
-	#time.sleep(1)
-	#my_drive_straight(robot, 200, 30)
-	#my_turn_in_place(robot, 180, 20)
-	#my_go_to_pose3(robot, -200, -200, 120)
-	my_go_to_pose2(robot, 100, 100, 0)
-	#cozmo_go_to_pose(robot, 100, 0, 0)
-
- 
 def run(robot: cozmo.robot.Robot):
 
 	print("***** Front wheel radius: " + str(get_front_wheel_radius()))
@@ -411,8 +385,7 @@ def run(robot: cozmo.robot.Robot):
 
 if __name__ == '__main__':
 
-	#cozmo.run_program(run)
-	cozmo.run_program(test)
+	cozmo.run_program(run)
 
 
 
