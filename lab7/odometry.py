@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 
+# Adam Heaney
+# CSEP 590 Robotics - Lab 7
+
 '''
 Stater code for Lab 7.
 
@@ -41,10 +44,16 @@ class Vector2:
 		self.y = y
 	def distanceTo(self, v):
 		return self.subtract(v).magnitude()
+	def add(self, v):
+		return Vector2(self.x + v.x, self.y + v.y)
 	def subtract(self, v):
 		return Vector2(self.x - v.x, self.y - v.y)
 	def magnitude(self):
 		return sqrt(sqr(self.x) + sqr(self.y))
+	def rotated(self, angle):
+		return Vector2(
+			(self.x * math.cos(angle)) + (self.y * -math.sin(angle)),
+			(self.x * math.sin(angle)) + (self.y * math.cos(angle)))
 
 # Wrappers for existing Cozmo navigation functions
 
@@ -150,6 +159,8 @@ def rotate_front_wheel(robot, angle_deg):
 	dist = cozmo.util.degrees(angle_deg).radians * get_front_wheel_radius()
 	cozmo_drive_straight(robot, dist, 50)
 
+COMPLETE_MOVEMENT_DELAY = 0.3
+
 def my_drive_straight(robot, dist, speed):
 	"""Drives the robot straight.
 		Arguments:
@@ -165,22 +176,25 @@ def my_drive_straight(robot, dist, speed):
 	if speed == 0.0:
 		return
 
-	direction = sign(speed)
+	direction = sign(speed) * sign(dist)
 	speed = abs(speed)
+	dist = abs(dist)
 	acceleration = speed # Per the default behavior of drive_wheels(), acceleration = speed
 
 	distanceToTargetSpeed = sqr(speed) / (2.0 * acceleration)
 
+	t = 0.0
 	if distanceToTargetSpeed >= dist:
-		time = sqrt((2.0 * dist) / acceleration)
+		t = sqrt((2.0 * dist) / acceleration)
 	else:
 		# time to achieve max speed
-		time = speed / acceleration
+		t = speed / acceleration
 		remainingDistance = dist - distanceToTargetSpeed
-		time += remainingDistance / speed
+		t += remainingDistance / speed
 
 	wheelSpeed = direction * speed
-	robot.drive_wheels(wheelSpeed, wheelSpeed, acceleration, acceleration, time)
+	robot.drive_wheels(wheelSpeed, wheelSpeed, acceleration, acceleration, t)
+	time.sleep(COMPLETE_MOVEMENT_DELAY)
 
 def my_turn_in_place(robot, angle, speed):
 	"""Rotates the robot in place.
@@ -194,11 +208,39 @@ def my_turn_in_place(robot, angle, speed):
 	# robot.drive_wheels() function.
 	# ####
 
-	if speed == 0.0
+	print("turn ", str(angle))
+
+	if speed == 0.0:
 		return
 
-ANGULAR_VELOCITY_DEGpS = 180.0
-DISPLACEMENT_VELOCITY_MMpS = 50.0
+	direction = sign(speed) * sign(angle)
+	speed = abs(speed)
+	angle = abs(angle)
+
+	wheelRadius = get_distance_between_wheels() * 0.5
+	dist = cozmo.util.degrees(angle).radians * wheelRadius
+	displacementspeed = cozmo.util.degrees(speed).radians * wheelRadius
+
+	acceleration = displacementspeed # Per the default behavior of drive_wheels(), acceleration = speed
+
+	distanceToTargetSpeed = sqr(displacementspeed) / (2.0 * acceleration)
+
+	t = 0.0
+	if distanceToTargetSpeed >= dist:
+		t = sqrt((2.0 * dist) / acceleration)
+	else:
+		# time to achieve max speed
+		t = displacementspeed / acceleration
+		remainingDistance = dist - distanceToTargetSpeed
+		t += remainingDistance / displacementspeed
+
+	wheelSpeed = direction * displacementspeed
+	robot.drive_wheels(-wheelSpeed, wheelSpeed, acceleration, acceleration, t)
+	time.sleep(COMPLETE_MOVEMENT_DELAY)
+
+ANGULAR_VELOCITY_DEGpS = 30.0
+DISPLACEMENT_VELOCITY_MMpS = 40.0
+DISTANCE_EPSILON = 0.5
 
 def my_go_to_pose1(robot, x, y, angle_z):
 	"""Moves the robot to a pose relative to its current pose.
@@ -214,20 +256,28 @@ def my_go_to_pose1(robot, x, y, angle_z):
 	# again at the target to get to the desired rotation (Approach 1).
 	# ####
 
-	vRobot = Vector2(robot.pose.position.x, robot.pose.position.y)
 	vTarget = Vector2(x, y)
-	vDelta = vTarget.subtract(vRobot)
+	distance = vTarget.magnitude()
+	targetHeading = 0
 
-	targetHeading = math.atan2(vDelta.y, vDelta.x)
-	angle = clampAngle(targetHeading - robot.pose.rotation.angle_z)
-	my_turn_in_place(robot, angle, ANGULAR_VELOCITY_DEGpS)
+	if distance > DISTANCE_EPSILON:
+		targetHeading = math.degrees(math.atan2(vTarget.y, vTarget.x))
+		angle = clampAngle(targetHeading)
+		my_turn_in_place(robot, angle, ANGULAR_VELOCITY_DEGpS)
 
-	distance = vDelta.magnitude()
-	my_drive_straight(robot, distance, DISPLACEMENT_VELOCITY_MMpS)
+		distance = vTarget.magnitude()
+		my_drive_straight(robot, distance, DISPLACEMENT_VELOCITY_MMpS)
 
 	angle = clampAngle(angle_z - targetHeading)
 	my_turn_in_place(robot, angle, ANGULAR_VELOCITY_DEGpS)
 
+DISTANCE_ALLOWANCE = 30.0
+
+GAIN_P1 = 0.13
+GAIN_P2 = 0.13
+GAIN_P3 = 0.13
+
+TIME_STEP = 0.5
 
 def my_go_to_pose2(robot, x, y, angle_z):
 	"""Moves the robot to a pose relative to its current pose.
@@ -241,7 +291,54 @@ def my_go_to_pose2(robot, x, y, angle_z):
 	# using the robot.drive_wheels() function to jointly move and rotate the 
 	# robot to reduce distance between current and desired pose (Approach 2).
 	# ####
-	pass
+
+	print("gtp ", str(x), " ", str(y), " a ", str(angle_z))
+
+	distanceBetweenWheels = get_distance_between_wheels()
+
+	initialPosition = Vector2(robot.pose.position.x, robot.pose.position.y)
+	initialRotation = robot.pose.rotation.angle_z.degrees
+	
+	goalPosition = Vector2(x, y)
+	goalRotation = angle_z
+
+	if goalPosition.magnitude() < DISTANCE_EPSILON:
+		my_turn_in_place(robot, angle_z, ANGULAR_VELOCITY_DEGpS)
+		return
+
+	currentPosition = Vector2(0.0, 0.0)
+	currentRotation = 0.0
+
+	while currentPosition.distanceTo(goalPosition) > DISTANCE_ALLOWANCE:
+
+		#print("C pos ", str(currentPosition.x), " ", str(currentPosition.y), " rot ", str(currentRotation), " G pos ", str(goalPosition.x), " ", str(goalPosition.y), " rot ", str(goalRotation))
+
+		distance = currentPosition.distanceTo(goalPosition)
+		headingdelta = clampAngle(currentRotation - math.degrees(math.atan2(currentPosition.y - goalPosition.y, currentPosition.x - goalPosition.x)))
+		angledelta = clampAngle(goalRotation - currentRotation)
+
+		#print("dist ", str(distance), " head ", str(headingdelta), " psoeangle ", str(angledelta))
+
+		displacementOffset = GAIN_P1 * distance
+		angleOffset = (GAIN_P2 * math.radians(clampAngle(headingdelta))) + (GAIN_P3 * math.radians(clampAngle(angledelta)))
+
+		velocityLeft = 0.5 * ((2.0 * displacementOffset) - (angleOffset * distanceBetweenWheels))
+		velocityRight = 0.5 * ((2.0 * displacementOffset) + (angleOffset * distanceBetweenWheels))
+
+		#print("dO ", str(displacementOffset), " aO ", str(angleOffset), " vL ", str(velocityLeft), " vR ", str(velocityRight))
+
+		robot.drive_wheels(velocityLeft, velocityRight, None, None, TIME_STEP)
+
+		robotPositionWorld = Vector2(robot.pose.position.x, robot.pose.position.y)
+		robotRotationWorld = robot.pose.rotation.angle_z.degrees
+
+		#print("RB pos ", str(robotPositionWorld.x), " ", str(robotPositionWorld.y), " rot ", str(robotRotationWorld))
+
+		currentPosition = robotPositionWorld.subtract(initialPosition).rotated(-math.radians(initialRotation))
+		currentRotation = clampAngle(robotRotationWorld - initialRotation)
+
+# a bit less than 90 to ensure cozmo turns past 90 degrees
+MIN_ANGLE_TO_TURN_IN_PLACE = 80.0
 
 def my_go_to_pose3(robot, x, y, angle_z):
 	"""Moves the robot to a pose relative to its current pose.
@@ -255,14 +352,43 @@ def my_go_to_pose3(robot, x, y, angle_z):
 	# as fast as possible. You can experiment with the built-in Cozmo function
 	# (cozmo_go_to_pose() above) to understand its strategy and do the same.
 	# ####
-	pass
 
-async def test(robot: cozmo.robot.Robot):
+	# Just turn in place if the robot is near the goal.
+	vTarget = Vector2(x, y)
+	distance = vTarget.magnitude()
+	if distance < DISTANCE_EPSILON:
+		my_turn_in_place(robot, angle_z, ANGULAR_VELOCITY_DEGpS)
+		return
+
+	# Turn within 90 degrees of the goal if it is behind the robot
+	targetHeading = math.degrees(math.atan2(vTarget.y, vTarget.x))
+	angle = clampAngle(targetHeading)
+	if abs(angle) > MIN_ANGLE_TO_TURN_IN_PLACE:
+		my_turn_in_place(robot, angle - (sign(angle) * MIN_ANGLE_TO_TURN_IN_PLACE), ANGULAR_VELOCITY_DEGpS)
+
+	# Advance towards the goal using my_go_to_pose2
+	# Turn in place towards the goal rotation past 90 degrees 
+	angleToFinalPose = clampAngle(angle_z - targetHeading)
+	if abs(angleToFinalPose) > MIN_ANGLE_TO_TURN_IN_PLACE:
+		angleDifference = angleToFinalPose - (sign(angleToFinalPose) * MIN_ANGLE_TO_TURN_IN_PLACE)
+		my_go_to_pose2(robot, x, y, angle_z - angleDifference)
+		my_turn_in_place(robot, angleDifference, ANGULAR_VELOCITY_DEGpS)
+	else:
+		my_go_to_pose2(robot, x, y, angle_z)
+
+def test(robot: cozmo.robot.Robot):
 	#cozmo_drive_straight(robot, 341, 50)
 	#await robot.drive_wheels(45, 30)
 	#time.sleep(600)
+	#rotate_front_wheel(robot, 360.0)
+	#time.sleep(1)
+	#my_drive_straight(robot, 200, 30)
+	#my_turn_in_place(robot, 180, 20)
+	#my_go_to_pose3(robot, -200, -200, 120)
+	my_go_to_pose2(robot, 100, 100, 0)
+	#cozmo_go_to_pose(robot, 100, 0, 0)
 
-
+ 
 def run(robot: cozmo.robot.Robot):
 
 	print("***** Front wheel radius: " + str(get_front_wheel_radius()))
